@@ -88,7 +88,7 @@ jobs:
           cache: "poetry"
 
       - name: Set project version with Poetry
-        working-directory: ./
+        working-directory: ./whatsapp-web.py
         run: |
           poetry version ${{ needs.details.outputs.new_version }}
 
@@ -110,9 +110,11 @@ jobs:
           labels: "version-bump"
 
       - name: Install dependencies
+        working-directory: ./whatsapp-web.py
         run: poetry install --sync --no-interaction
 
       - name: Build source and wheel distribution
+        working-directory: ./whatsapp-web.py
         run: |
           poetry build
 
