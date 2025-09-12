@@ -10,7 +10,7 @@ on:
 
 env:
   PACKAGE_NAME: "wawebpy"
-  OWNER: "cvcvka4"
+  OWNER: "cvcvka5"
   TAP_NAME: "whatsapp-web.py"
 
 jobs:
