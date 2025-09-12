@@ -19,12 +19,7 @@ This project allows QR-based authentication and aims to provide a framework for 
 ## Usage
 
 ```python
-from src import Client
-from src.structures.auth import NoAuth
-
-client = Client()
-client.on('qr', lambda qr_data: print("Scan this QR:", qr_data))
-client.initialize({"auth": NoAuth(), "headless": False})
+The package is not yet functional. Keep contributing to speed up the process.
 ```
 
 ## Contributing
