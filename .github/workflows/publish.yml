@@ -3,7 +3,8 @@ name: Upload Python Package to PyPI on Tag
 on:
   push:
     tags:
-      - "*.*.*"   # runs only on semantic version tags like 1.0.0, 2.3.1, etc.
+      - "*.*.*"   # runs only on semantic version tags like 1.0.0, v2.3.1, etc.
+      - "v*.*.*"
 
 jobs:
   pypi-publish:
