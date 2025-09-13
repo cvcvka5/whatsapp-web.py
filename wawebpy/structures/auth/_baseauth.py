@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from playwright._impl._errors import TimeoutError as PWTimeoutError
-from src.exceptions import QrNotFound
+from wawebpy.exceptions import QrNotFound
 
 
 class BaseAuth(ABC):
