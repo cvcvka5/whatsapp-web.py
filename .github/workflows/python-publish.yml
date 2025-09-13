@@ -27,6 +27,11 @@ jobs:
           echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
       - name: Install Poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
 
@@ -44,4 +49,29 @@ jobs:
         run: |
           PACKAGE_NAME=${{ needs.details.outputs.package_name }}
           response=$(curl -s https://pypi.org/pypi/$PACKAGE_NAME/json || echo "{}")
-          latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | so
+          latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | sort -V | tail -n 1 || echo "0.0.0")
+          echo "Latest version on PyPI: $latest_previous_version"
+          echo "New version from tag: ${{ needs.details.outputs.new_version }}"
+
+  publish:
+    needs: [details, check_pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Configure PyPI token
+        run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Build and publish
+        run: |
+          poetry version ${{ needs.details.outputs.new_version }}
+          poetry build
+          poetry publish
