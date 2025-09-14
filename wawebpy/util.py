@@ -1,7 +1,7 @@
 from playwright._impl._errors import TimeoutError as PWTimeoutError
 from playwright.sync_api import Page
 from typing import Tuple
-from .constants import WAWebModuleType
+from .constants import WAWebModuleType, WAWEB_STORE
 import qrcode
 from .exceptions import QrNotFound
 
@@ -38,23 +38,30 @@ def get_qr_in_page(page: Page, qr_data_selector: str, timeout: int = 5000) -> qr
 
 
 
-def get_module_script(module: WAWebModuleType, variables: Tuple[str] = None, function: str = None, args: Tuple[str] = None) -> str:
-    ret = f"require('{module}')"
+def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple[str] = None) -> str:
     
-    if variables is not None:
+    basename, *variables = module.split(".")
+    
+    ret = f"require('{basename}')"
+    if variables:
         for variable in variables:
-            variable = str(variable).strip()
             ret += f".{variable}"
     
+    if function:
+        ret += f".{function}("
+
     if args is not None:
-        args = map(str, args)
-        if function is not None:
-            function = function.strip().strip(".")
-            ret += f".{function}("
-        else:
-            ret += "("
-        ret += ", ".join(args)
+        for arg in args:
+            is_string = type(arg) == str
+            ret += f"'{arg}'" if is_string else str(arg)
+            ret += ","
+    
+    ret = ret.strip(",")
+    
+    if function:
         ret += ")"
-        
+    
     return ret
-        
+
+def get_contact_script(jid: str) -> str:
+    return get_module_script(WAWEB_STORE["Contacts"])+f"._index['{jid}']"
