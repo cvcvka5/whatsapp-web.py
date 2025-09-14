@@ -1,0 +1,5 @@
+Implement:
+    Contact:
+        WAWebContactGetters, WAWebBlockContactAction,
+        WAWebContactProfilePicThumbBridge, WAWebFindCommonGroupsContactAction.findCommonGroup,
+        WAWebContactStatusBridge, WAWebApiContact
