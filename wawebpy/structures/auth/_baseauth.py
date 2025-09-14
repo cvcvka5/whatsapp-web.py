@@ -1,25 +1,28 @@
 from abc import ABC, abstractmethod
 from playwright._impl._errors import TimeoutError as PWTimeoutError
 from wawebpy.exceptions import QrNotFound
+from playwright.sync_api import Page
+from ...util import get_qr_in_page
+
 
 
 class BaseAuth(ABC):
-    def __init__(self):
+    def __init__(self, client):
         """
         Base class for authentication methods.
         Holds a reference to the client instance.
         """
-        self.client = None
+        self.client = client
     
     @abstractmethod
-    def authenticate(self):
+    def authenticate(self, clientOptions, playwright):
         """
         Abstract method that must be implemented by subclasses
         to perform the actual authentication.
         """
         pass
 
-    def _auth_with_qr(self, clientOptions):
+    def _auth_with_qr(self, browser_or_ctx, clientOptions) -> Page:
         """
         Handles QR-based authentication for WhatsApp Web.
 
@@ -32,12 +35,16 @@ class BaseAuth(ABC):
         """
         qr = None  # Store the last QR code to detect changes
 
+            
+        page = browser_or_ctx.new_page()
+        page.goto(clientOptions.get("web_url"))
         retry = 0
         max_retries = 12
         while retry < max_retries:
             try:
                 # Try to get the current QR code from the page
-                current_qr = self.client._get_qr(options=clientOptions)
+                current_qr = get_qr_in_page(page=page,
+                                            qr_data_selector=clientOptions.get("qr_data_selector"))
                 retry = 0  # Reset retry counter on success
             except QrNotFound as exc:
                 retry += 1  # Increment retry counter if QR is not found
@@ -56,7 +63,7 @@ class BaseAuth(ABC):
             try:
                 if current_qr is None:
                     # Wait for the WhatsApp chats interface to appear
-                    self.client._page.wait_for_selector("span[aria-label=WhatsApp]", timeout=1000)
+                    page.wait_for_selector("span[aria-label=WhatsApp]", timeout=1000)
                     break  # Chats loaded, exit loop
             except PWTimeoutError:
                 # Page not loaded yet, continue checking
@@ -64,3 +71,5 @@ class BaseAuth(ABC):
             
         # Emit ready event when authentication is complete
         self.client.emit("ready")
+        
+        return page
