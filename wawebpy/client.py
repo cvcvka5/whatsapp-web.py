@@ -80,10 +80,8 @@ class Client(EventEmitter):
         
         # Trigger authentication
         self._page = options.get("auth").authenticate(clientOptions=options, playwright=self._playwright)    
+        self._page.wait_for_load_state("networkidle")
         self.emit("ready")
-        
-        
-        
         
         
 
