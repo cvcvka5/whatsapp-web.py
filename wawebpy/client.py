@@ -1,5 +1,8 @@
-from .structures.auth import NoAuth, BaseAuth
-from .structures import Message, EventEmitter, ClientOptions
+from .structures.auth.baseauth import BaseAuth
+from .structures.auth.noauth import NoAuth
+from .structures.message import Message
+from .structures.eventemitter import EventEmitter
+from .structures.clientoptions import ClientOptions
 from .exceptions import ClientAlreadyInitialized, InvalidAuth
 from typing import overload, Literal, Callable
 from playwright.sync_api import sync_playwright, Playwright, Browser, Page

@@ -1,4 +1,4 @@
-from ._baseauth import BaseAuth
+from .baseauth import BaseAuth
 from playwright.sync_api import Page, Playwright
 
 

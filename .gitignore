@@ -6,3 +6,4 @@ main.py
 dist/
 dist/*
 .wawebpy_auth
+temp.py

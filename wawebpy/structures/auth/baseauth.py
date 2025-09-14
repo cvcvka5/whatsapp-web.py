@@ -68,8 +68,5 @@ class BaseAuth(ABC):
             except PWTimeoutError:
                 # Page not loaded yet, continue checking
                 pass
-            
-        # Emit ready event when authentication is complete
-        self.client.emit("ready")
         
         return page

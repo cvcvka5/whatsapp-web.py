@@ -1,7 +1,9 @@
 from playwright._impl._errors import TimeoutError as PWTimeoutError
 from playwright.sync_api import Page
+from typing import Tuple
+from .constants import WAWebModuleType
 import qrcode
-from ..exceptions import QrNotFound
+from .exceptions import QrNotFound
 
 def get_qr_in_page(page: Page, qr_data_selector: str, timeout: int = 5000) -> qrcode.QRCode:
     """
@@ -33,3 +35,26 @@ def get_qr_in_page(page: Page, qr_data_selector: str, timeout: int = 5000) -> qr
     qr.make(fit=True)
     
     return qr
+
+
+
+def get_module_script(module: WAWebModuleType, variables: Tuple[str] = None, function: str = None, args: Tuple[str] = None) -> str:
+    ret = f"require('{module}')"
+    
+    if variables is not None:
+        for variable in variables:
+            variable = str(variable).strip()
+            ret += f".{variable}"
+    
+    if args is not None:
+        args = map(str, args)
+        if function is not None:
+            function = function.strip().strip(".")
+            ret += f".{function}("
+        else:
+            ret += "("
+        ret += ", ".join(args)
+        ret += ")"
+        
+    return ret
+        
