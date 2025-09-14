@@ -3,9 +3,10 @@ from .structures.auth.noauth import NoAuth
 from .structures.message import Message
 from .structures.eventemitter import EventEmitter
 from .structures.clientoptions import ClientOptions
+from .structures.contact import Contact
 from .exceptions import ClientAlreadyInitialized, InvalidAuth
 from typing import overload, Literal, Callable
-from playwright.sync_api import sync_playwright, Playwright, Browser, Page
+from playwright.sync_api import sync_playwright, Playwright, Page
 
 
 class Client(EventEmitter):
@@ -80,6 +81,10 @@ class Client(EventEmitter):
         # Trigger authentication
         self._page = options.get("auth").authenticate(clientOptions=options, playwright=self._playwright)    
         self.emit("ready")
+        
+        
+        
+        
         
 
     def stop(self):
