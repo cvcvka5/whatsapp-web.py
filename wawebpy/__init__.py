@@ -1,4 +1,4 @@
-from ._client import Client, ClientOptions
+from ._client import Client
 
 
-__all__ = [ "Client", "ClientOptions", "structures", "util"]
+__all__ = [ "Client", "structures", "util"]

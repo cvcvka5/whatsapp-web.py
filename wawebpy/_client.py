@@ -1,25 +1,8 @@
-from .structures.auth import NoAuth, LegacySessionAuth, LocalAuth, BaseAuth
-from .structures import Message, EventEmitter
-from .exceptions import ClientAlreadyInitialized, InvalidAuth, QrNotFound
-from typing import overload, Literal, Callable, TypedDict
+from .structures.auth import NoAuth, BaseAuth
+from .structures import Message, EventEmitter, ClientOptions
+from .exceptions import ClientAlreadyInitialized, InvalidAuth
+from typing import overload, Literal, Callable
 from playwright.sync_api import sync_playwright, Playwright, Browser, Page
-from playwright._impl._errors import TimeoutError as PWTimeoutError
-import qrcode
-
-class ClientOptions(TypedDict):
-    """
-    TypedDict for client configuration options.
-    
-    Attributes:
-        auth: Authentication method (NoAuth, LegacySessionAuth, LocalAuth)
-        headless: Whether to run browser in headless mode
-        web_url: URL of WhatsApp Web
-        qr_data_selector: CSS selector for the QR code data element
-    """
-    auth: NoAuth | LegacySessionAuth | LocalAuth
-    headless: bool
-    web_url: str
-    qr_data_selector: str
 
 
 class Client(EventEmitter):
@@ -31,9 +14,8 @@ class Client(EventEmitter):
         for Playwright objects and sets initialized flag to False.
         """
         # Pre Initialization
-        self._initialized = False
-        self._pwright: Playwright = None
-        self._browser: Browser = None
+        self._initialized: bool = False
+        self._playwright: Playwright = None
         self._page: Page = None
         
         # During Initialization
@@ -78,7 +60,7 @@ class Client(EventEmitter):
         if self.initialized: 
             raise ClientAlreadyInitialized("You try to initialize a Client that's already initialized.")
         
-        options.setdefault("auth", NoAuth())
+        options.setdefault("auth", NoAuth(client=self))
         options["auth"].client = self
     
         if not isinstance(options.get("auth"), BaseAuth): 
@@ -90,55 +72,23 @@ class Client(EventEmitter):
         
         # Set initialized flag and start Playwright browser
         self._initialized = True
-        self._pwright = sync_playwright().start()
-        self._browser = self._pwright.chromium.launch(headless=False)
-        self._page = self._browser.new_page()
+        self._playwright = sync_playwright().start()
         
         # Trigger authentication
-        options.get("auth").authenticate(clientOptions=options)    
+        self._page = options.get("auth").authenticate(clientOptions=options, playwright=self._playwright)    
+        self.emit("ready")
         
-    
-    def _get_qr(self, options: ClientOptions, timeout: int = 5000) -> qrcode.QRCode:
-        """
-        Retrieves the current QR code from WhatsApp Web and returns a QRCode object.
-        
-        Args:
-            options: ClientOptions containing the QR data selector
-            timeout: Maximum time to wait for the QR element (milliseconds)
-            
-        Returns:
-            qrcode.QRCode: QR code object representing the current QR
-        
-        Raises:
-            QrNotFound: If the QR code element is not found within the timeout
-        """
-        if self._page.url != options.get("web_url"):
-            self._page.goto(options.get("web_url"))
-            
-        try:
-            qr_data_div = self._page.wait_for_selector(options.get("qr_data_selector"), timeout=timeout)
-            qr_data = qr_data_div.get_attribute("data-ref")
-        except PWTimeoutError:
-            raise QrNotFound(f"QR code couldn't be found with selector '{options.get('qr_data_selector')}'.")
-        
-        qr = qrcode.QRCode(
-            version=None,
-            error_correction=qrcode.ERROR_CORRECT_M,
-            box_size=1,
-            border=0
-        )
-        qr.add_data(qr_data)
-        qr.make(fit=True)
-        return qr
-        
+
     def stop(self):
         """
         Stops the client by closing the Playwright page, browser, and stopping Playwright.
         Resets the initialized flag to False.
         """
-        self._page.close()
-        self._browser.close()
-        self._pwright.stop()
+        if self._page:
+            self._page.close()
+        if self._playwright:
+            self._playwright.stop()
+            
         self._initialized = False
         
         
