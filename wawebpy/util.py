@@ -1,7 +1,7 @@
 from playwright._impl._errors import TimeoutError as PWTimeoutError
 from playwright.sync_api import Page
 from typing import Tuple
-from .constants import WAWebModuleType, WAWEB_STORE
+from .constants import WAWebModuleType
 import qrcode
 from .exceptions import QrNotFound
 
@@ -62,4 +62,4 @@ def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple
     return ret
 
 def get_contact_script(jid: str) -> str:
-    return get_module_script(WAWEB_STORE["Contacts"])+f"._index['{jid}']"
+    return get_module_script("WAWebContactCollection.ContactCollection")+f"._index['{jid}']"
