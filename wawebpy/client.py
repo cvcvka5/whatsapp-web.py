@@ -5,6 +5,7 @@ from .structures.eventemitter import EventEmitter
 from .structures.clientoptions import ClientOptions
 from .structures.contact import Contact
 from .exceptions import ClientAlreadyInitialized, InvalidAuth
+from .util import get_module_script
 from typing import overload, Literal, Callable
 from playwright.sync_api import sync_playwright, Playwright, Page
 
@@ -83,7 +84,15 @@ class Client(EventEmitter):
         self._page.wait_for_load_state("networkidle")
         self.emit("ready")
         
+    def set_status(self, status: str) -> bool:
+        script = get_module_script("WAWebContactStatusBridge", "setMyStatus", (f"'{status}'", ))
+        status = self._page.evaluate(script)["status"]
+
+        return status == 200
         
+    def get_contact(self, jid: str) -> Contact:
+        return Contact.get(self._page, jid)
+
 
     def stop(self):
         """
