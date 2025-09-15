@@ -1,8 +1,12 @@
 Implement:
     Contact:
-        WAWebBlockContactAction,
-        WAWebContactProfilePicThumbBridge, WAWebFindCommonGroupsContactAction.findCommonGroup,
+        WAWebFindCommonGroupsContactAction.findCommonGroups,
         WAWebContactStatusBridge, WAWebApiContact
     
     Auth & QR:
         Better Logged-in detection
+
+    WAWebContactStatusBridge & other:
+        WidFactory
+
+    Better Error Handling
