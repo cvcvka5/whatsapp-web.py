@@ -2,15 +2,14 @@ from __future__ import annotations
 from typing import TypedDict
 from playwright.sync_api import Page
 from ..util import get_contact_script, get_module_script
-from ..constants import WAWEB_STORE
 
-class IDType(TypedDict, total=True):
+class WIDType(TypedDict, total=True):
     server: str
     user: str
     _serialized: str
 
 class ContactKwargs(TypedDict, total=True):
-    id: IDType
+    id: WIDType
     name: str
     pushName: str
     notifyName: str
@@ -45,10 +44,8 @@ class Contact:
         self._page: Page = page
         
         # Required fields from kwargs
-        self._id: "IDType" = kwargs["id"]
-        self._jid: str = self._id["_serialized"]
+        self._id: WIDType = kwargs["id"]
         self._name: str = kwargs["name"]
-        self._phone_number: str = self._id["user"]
         self._push_name: str = kwargs["pushName"]
         self._notify_name: str = kwargs["notifyName"]
         self._short_name: str = kwargs["shortName"]
@@ -64,12 +61,12 @@ class Contact:
 
 
     def block(self) -> None:
-        script = get_module_script(WAWEB_STORE["BlockContact"], "blockContact", ("{'contact': "+self.__js_repr+"}", ))
+        script = get_module_script("WAWebBlockContactAction", "blockContact", ("{'contact': "+self.__js_repr+"}", ))
         self.page.evaluate(script)
         
  
     def unblock(self) -> None:
-        script = get_module_script(WAWEB_STORE["BlockContact"], "unblockContact", (self.__js_repr, ))
+        script = get_module_script("WAWebBlockContactAction", "unblockContact", (self.__js_repr, ))
         self.page.evaluate(script)
 
 
@@ -78,7 +75,7 @@ class Contact:
         attrs = {}
         for func_name, attr_name in Contact.__attribute_map.items():
             contact_script = get_contact_script(jid)
-            script = get_module_script(module=WAWEB_STORE["ContactHelpers"],
+            script = get_module_script(module="WAWebContactGetters",
                                        function=func_name,
                                        args=(contact_script, ))
             attr_value = page.evaluate(script)
@@ -96,10 +93,25 @@ class Contact:
     def __str__(self):
         return f"Contact({self.short_name}, {self.phone_number})"
         
-        
+    
     # --- Properties (read-only) ---
+    def get_common_groups(self):
+        # TODO
+        pass
+    
+    def get_status(self) -> str:
+        script = get_module_script("WAWebContactStatusBridge", "getStatus",
+                                   (self.id,))
+        print(script)
+        
+        return self.page.evaluate(script)["status"]
+    
+    def get_profile_picture(self) -> str:
+        script = get_module_script("WAWebContactProfilePicThumbBridge", "profilePicResync", (f"[{self.__js_repr}]",))
+        return self.page.evaluate(script)[0].get("eurl")
+    
     @property
-    def __js_repr(self):
+    def __js_repr(self) -> str:
         return get_contact_script(self.jid) 
     
     @property
@@ -107,12 +119,12 @@ class Contact:
         return self._page
 
     @property
-    def id(self) -> IDType:
+    def id(self) -> WIDType:
         return self._id
 
     @property
     def jid(self) -> str:
-        return self._jid
+        return self._id["_serialized"]
 
     @property
     def name(self) -> str:
@@ -120,7 +132,7 @@ class Contact:
 
     @property
     def phone_number(self) -> str:
-        return self._phone_number
+        return self._id["user"]
 
     @property
     def push_name(self) -> str:
