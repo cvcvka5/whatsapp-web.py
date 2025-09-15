@@ -1,70 +1,147 @@
 from __future__ import annotations
-from typing import TypedDict, Optional
+from typing import TypedDict
 from playwright.sync_api import Page
-from ..util import get_contact_script
+from ..util import get_contact_script, get_module_script
 from ..constants import WAWEB_STORE
 
-class IDType(TypedDict):
+class IDType(TypedDict, total=True):
     server: str
     user: str
     _serialized: str
 
-class ContactAttributes(TypedDict, total=False):
+class ContactKwargs(TypedDict, total=True):
     id: IDType
     name: str
+    pushName: str
+    notifyName: str
     shortName: str
-    pushname: str
-    type: str
-    statusMute: bool
-    isContactSyncCompleted: int
-    textStatusLastUpdateTime: int
-    syncToAddressbook: bool
-    stale: bool
-    isContactBlocked: bool
-    isContactOptedOut: bool
-    isEverOptedOutOfMarketingMessages: bool
-    isMarketingMessageThread: bool
-    pendingAction: int
-    promises: dict
-    isHosted: bool
-    isOrHasBeenHosted: bool
-    isFavorite: bool
-    canSendMsgWhileTimelocked: bool
+    mentionName: str
+    hash: str
+    isMe: bool
+    isGroup: bool
+    isBusiness: bool
+    isBot: bool
+    isContact: bool
 
 class Contact:
-    def __init__(self, page: Page, **kwargs):
-        attrs: ContactAttributes = kwargs
-        self.id: Optional[IDType] = attrs.get("id")
-        self.jid = self.id.get("_serialized")
-        self.name: Optional[str] = attrs.get("name")
-        self.shortName: Optional[str] = attrs.get("shortName")
-        self.pushname: Optional[str] = attrs.get("pushname")
-        self.type: Optional[str] = attrs.get("type")
-        self.statusMute: bool = attrs.get("statusMute", False)
-        self.isContactSyncCompleted: int = attrs.get("isContactSyncCompleted", 0)
-        self.textStatusLastUpdateTime: int = attrs.get("textStatusLastUpdateTime", -1)
-        self.syncToAddressbook: bool = attrs.get("syncToAddressbook", True)
-        self.stale: bool = attrs.get("stale", False)
-        self.isContactBlocked: bool = attrs.get("isContactBlocked", False)
-        self.isContactOptedOut: bool = attrs.get("isContactOptedOut", False)
-        self.isEverOptedOutOfMarketingMessages: bool = attrs.get("isEverOptedOutOfMarketingMessages", False)
-        self.isMarketingMessageThread: bool = attrs.get("isMarketingMessageThread", False)
-        self.pendingAction: int = attrs.get("pendingAction", 0)
-        self.promises: dict = attrs.get("promises", {})
-        self.isHosted: bool = attrs.get("isHosted", False)
-        self.isOrHasBeenHosted: bool = attrs.get("isOrHasBeenHosted", False)
-        self.isFavorite: bool = attrs.get("isFavorite", False)
-        self.canSendMsgWhileTimelocked: bool = attrs.get("canSendMsgWhileTimelocked", True)
-        # TODO Add common groups & profilePic
-        self.commonGroups: None = None
-        self.profilePic: None = None
+    __attribute_map = {
+            "getId": "id",
+            "getName": "name",
+            "getPushname": "pushName",
+            "getNotifyName": "notifyName",
+            "getShortName": "shortName",
+            "getMentionName": "mentionName",
+
+            # Flags
+            "getUserhash": "hash",
+            "getIsMe": "isMe",
+            "getIsGroup": "isGroup",
+            "getIsBusiness": "isBusiness",
+            "getIsBot": "isBot",
+            "getIsWAContact": "isContact",
+        }
+    
+    def __init__(self, page: Page, **kwargs: ContactKwargs):
+        self._page: Page = page
+        
+        # Required fields from kwargs
+        self._id: "IDType" = kwargs["id"]
+        self._jid: str = self._id["_serialized"]
+        self._name: str = kwargs["name"]
+        self._phone_number: str = self._id["user"]
+        self._push_name: str = kwargs["pushName"]
+        self._notify_name: str = kwargs["notifyName"]
+        self._short_name: str = kwargs["shortName"]
+        self._mention_name: str = kwargs["mentionName"]
+        self._hash: str = kwargs["hash"]
+
+        # Flags
+        self._is_me: bool = kwargs["isMe"]
+        self._is_group: bool = kwargs["isGroup"]
+        self._is_business: bool = kwargs["isBusiness"]
+        self._is_bot: bool = kwargs["isBot"]
+        self._is_contact: bool = kwargs["isContact"]
+
+        
 
     @staticmethod
     def get(page: Page, jid: str) -> Contact:
-        res = page.evaluate(get_contact_script(jid)+".attributes")
-        return Contact(page, **res)
+        attrs = {}
+        for func_name, attr_name in Contact.__attribute_map.items():
+            contact_script = get_contact_script(jid)
+            script = get_module_script(module=WAWEB_STORE["ContactHelpers"],
+                                       function=func_name,
+                                       args=((contact_script,), ))
+            attr_value = page.evaluate(script)
+            
+            attrs[attr_name] = attr_value
+                
+        
+        return Contact(page, **attrs)
 
     def resync(self) -> None:
         """Update this instance with fresh attributes from WhatsApp Web."""
         new_contact = Contact.get(self.page, self.jid)
         self.__dict__.update(new_contact.__dict__)
+        
+    def __str__(self):
+        return f"Contact({self.short_name}, {self.phone_number})"
+        
+        
+    # --- Properties (read-only) ---
+    @property
+    def page(self) -> Page:
+        return self._page
+
+    @property
+    def id(self) -> IDType:
+        return self._id
+
+    @property
+    def jid(self) -> str:
+        return self._jid
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def phone_number(self) -> str:
+        return self._phone_number
+
+    @property
+    def push_name(self) -> str:
+        return self._push_name
+
+    @property
+    def notify_name(self) -> str:
+        return self._notify_name
+
+    @property
+    def short_name(self) -> str:
+        return self._short_name
+
+    @property
+    def mention_name(self) -> str:
+        return self._mention_name
+
+    # Flags
+    @property
+    def is_me(self) -> bool:
+        return self._is_me
+
+    @property
+    def is_group(self) -> bool:
+        return self._is_group
+
+    @property
+    def is_business(self) -> bool:
+        return self._is_business
+
+    @property
+    def is_bot(self) -> bool:
+        return self._is_bot
+
+    @property
+    def is_contact(self) -> bool:
+        return self._is_contact

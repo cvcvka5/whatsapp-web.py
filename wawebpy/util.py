@@ -53,7 +53,11 @@ def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple
     if args is not None:
         for arg in args:
             is_string = type(arg) == str
-            ret += f"'{arg}'" if is_string else str(arg)
+            is_script = type(arg) == tuple
+            if is_script:
+                ret += str(arg[0])
+            else:
+                ret += f"'{arg}'" if is_string else str(arg)  
             ret += ","
     
     ret = ret.strip(",")
