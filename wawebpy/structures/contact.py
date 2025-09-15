@@ -62,7 +62,16 @@ class Contact:
         self._is_bot: bool = kwargs["isBot"]
         self._is_contact: bool = kwargs["isContact"]
 
+
+    def block(self) -> None:
+        script = get_module_script(WAWEB_STORE["BlockContact"], "blockContact", ("{'contact': "+self.__js_repr+"}", ))
+        self.page.evaluate(script)
         
+ 
+    def unblock(self) -> None:
+        script = get_module_script(WAWEB_STORE["BlockContact"], "unblockContact", (self.__js_repr, ))
+        self.page.evaluate(script)
+
 
     @staticmethod
     def get(page: Page, jid: str) -> Contact:
@@ -71,7 +80,7 @@ class Contact:
             contact_script = get_contact_script(jid)
             script = get_module_script(module=WAWEB_STORE["ContactHelpers"],
                                        function=func_name,
-                                       args=((contact_script,), ))
+                                       args=(contact_script, ))
             attr_value = page.evaluate(script)
             
             attrs[attr_name] = attr_value
@@ -83,12 +92,16 @@ class Contact:
         """Update this instance with fresh attributes from WhatsApp Web."""
         new_contact = Contact.get(self.page, self.jid)
         self.__dict__.update(new_contact.__dict__)
-        
+    
     def __str__(self):
         return f"Contact({self.short_name}, {self.phone_number})"
         
         
     # --- Properties (read-only) ---
+    @property
+    def __js_repr(self):
+        return get_contact_script(self.jid) 
+    
     @property
     def page(self) -> Page:
         return self._page
