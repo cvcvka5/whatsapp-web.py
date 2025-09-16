@@ -74,13 +74,14 @@ class Client(EventEmitter):
         options.setdefault("headless", True)
         options.setdefault("web_url", "https://web.whatsapp.com/")
         options.setdefault("qr_data_selector", "div[data-ref]")
+        options.setdefault("loaded_selector", "span[aria-label=WhatsApp]")
         
         # Set initialized flag and start Playwright browser
         self._initialized = True
         self._playwright = sync_playwright().start()
         
         # Trigger authentication
-        self._page = options.get("auth").authenticate(clientOptions=options, playwright=self._playwright)    
+        self._page = options.get("auth").authenticate(client_options=options, playwright=self._playwright)    
         self._page.wait_for_load_state("networkidle")
         self.emit("ready")
         
