@@ -3,13 +3,13 @@ from typing import TypedDict
 from playwright.sync_api import Page
 from ..util import get_contact_script, get_module_script
 
-class WIDType(TypedDict, total=True):
+class IDType(TypedDict, total=True):
     server: str
     user: str
     _serialized: str
 
 class ContactKwargs(TypedDict, total=True):
-    id: WIDType
+    id: IDType
     name: str
     pushName: str
     notifyName: str
@@ -44,7 +44,7 @@ class Contact:
         self._page: Page = page
         
         # Required fields from kwargs
-        self._id: WIDType = kwargs["id"]
+        self._id: IDType = kwargs["id"]
         self._name: str = kwargs["name"]
         self._push_name: str = kwargs["pushName"]
         self._notify_name: str = kwargs["notifyName"]
@@ -90,36 +90,31 @@ class Contact:
         new_contact = Contact.get(self.page, self.jid)
         self.__dict__.update(new_contact.__dict__)
     
-    def __str__(self):
-        return f"Contact({self.short_name}, {self.phone_number})"
-        
+
     
     # --- Properties (read-only) ---
     def get_common_groups(self):
         # TODO
         pass
     
+    
     def get_status(self) -> str:
         script = get_module_script("WAWebContactStatusBridge", "getStatus",
-                                   (self.id,))
-        print(script)
+                                   (self.__js_variable_repr("id"),))
         
         return self.page.evaluate(script)["status"]
     
     def get_profile_picture(self) -> str:
         script = get_module_script("WAWebContactProfilePicThumbBridge", "profilePicResync", (f"[{self.__js_repr}]",))
         return self.page.evaluate(script)[0].get("eurl")
-    
-    @property
-    def __js_repr(self) -> str:
-        return get_contact_script(self.jid) 
+
     
     @property
     def page(self) -> Page:
         return self._page
 
     @property
-    def id(self) -> WIDType:
+    def id(self) -> IDType:
         return self._id
 
     @property
@@ -170,3 +165,14 @@ class Contact:
     @property
     def is_contact(self) -> bool:
         return self._is_contact
+    
+    @property
+    def __js_repr(self) -> str:
+        return get_contact_script(self.jid) 
+    
+    def __js_variable_repr(self, variable: str):
+        return f"{self.__js_repr}.{variable}"
+    
+    def __str__(self):
+        return f"Contact({self.short_name}, {self.phone_number})"
+        
