@@ -15,14 +15,14 @@ class BaseAuth(ABC):
         self.client = client
     
     @abstractmethod
-    def authenticate(self, clientOptions, playwright):
+    def authenticate(self, client_options, playwright):
         """
         Abstract method that must be implemented by subclasses
         to perform the actual authentication.
         """
         pass
 
-    def _auth_with_qr(self, browser_or_ctx, clientOptions) -> Page:
+    def _auth_with_qr(self, browser_or_ctx, client_options, max_retries: int = 5) -> Page:
         """
         Handles QR-based authentication for WhatsApp Web.
 
@@ -31,26 +31,28 @@ class BaseAuth(ABC):
         a limited number of times if the QR is not found.
 
         Args:
-            clientOptions: Dictionary of client options including selectors.
+            client_options: Dictionary of client options including selectors.
         """
         qr = None  # Store the last QR code to detect changes
 
             
         page = browser_or_ctx.new_page()
-        page.goto(clientOptions.get("web_url"))
+        page.goto(client_options.get("web_url"))
         retry = 0
-        max_retries = 12
-        while retry < max_retries:
+        while retry <= max_retries:
             try:
                 # Try to get the current QR code from the page
                 current_qr = get_qr_in_page(page=page,
-                                            qr_data_selector=clientOptions.get("qr_data_selector"))
+                                            qr_data_selector=client_options.get("qr_data_selector"),
+                                            timeout=5000)
                 retry = 0  # Reset retry counter on success
             except QrNotFound as exc:
                 retry += 1  # Increment retry counter if QR is not found
                 
                 if retry >= max_retries:
                     raise exc  # Give up after exceeding max retries
+                elif retry % 3 == 0:
+                    page.reload()
 
                 current_qr = None  # No QR available this iteration
             
@@ -63,7 +65,7 @@ class BaseAuth(ABC):
             try:
                 if current_qr is None:
                     # Wait for the WhatsApp chats interface to appear
-                    page.wait_for_selector("span[aria-label=WhatsApp]", timeout=1000)
+                    page.wait_for_selector(client_options.get("loaded_selector"), timeout=1000)
                     break  # Chats loaded, exit loop
             except PWTimeoutError:
                 # Page not loaded yet, continue checking

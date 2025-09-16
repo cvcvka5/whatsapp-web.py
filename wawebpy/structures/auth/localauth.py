@@ -4,6 +4,8 @@ from ...util import get_qr_in_page
 import os
 import shutil
 from playwright.sync_api import Page
+from playwright._impl._errors import TimeoutError as PWTimeoutError
+
 
 class LocalAuth(BaseAuth):
     """
@@ -27,7 +29,7 @@ class LocalAuth(BaseAuth):
     def filepath(self):
         return f"{self._dirPath}{self._sessionId}"
         
-    def authenticate(self, clientOptions, playwright) -> Page:
+    def authenticate(self, client_options, playwright) -> Page:
         """
         Authenticate the client using a local session.
         """
@@ -38,33 +40,52 @@ class LocalAuth(BaseAuth):
         
         ctx = playwright.chromium.launch_persistent_context(
             user_data_dir=self.filepath,
-            headless = clientOptions.get("headless")
+            headless = client_options.get("headless")
         )
 
         if session_exists:
-            return self._load_session(clientOptions=clientOptions, browser_or_ctx=ctx)
+            return self._load_session(client_options=client_options, browser_or_ctx=ctx)
         
         
-        return self._save_session(clientOptions=clientOptions, browser_or_ctx=ctx)
+        return self._save_session(client_options=client_options, browser_or_ctx=ctx)
             
     def logout(self) -> None:
         self.client.stop()
         shutil.rmtree(self.filepath, ignore_errors=True)
     
     
-    def _load_session(self, clientOptions, browser_or_ctx) -> Page:
+    def _load_session(self, client_options, browser_or_ctx, max_retries: int = 3) -> Page:
             
         page = browser_or_ctx.new_page()
-        page.goto(clientOptions.get("web_url"))
+        page.goto(client_options.get("web_url"))
         
-        try:
-            get_qr_in_page(page, clientOptions.get("qr_data_selector"), 7500)
-            self.logout()
-            raise InvalidAuth("Local session has expired or is invalid.")
-        except QrNotFound:
-            pass
+        retry = 0
+        page_is_valid = False
+        while retry <= max_retries:
+            try:
+                get_qr_in_page(page, client_options.get("qr_data_selector"), 5000)
+                self.logout()
+                raise InvalidAuth("Local session has expired or is invalid.")
+            except QrNotFound:
+                pass
+            
+            try:
+                page.wait_for_selector(client_options.get("loaded_selector"), timeout=5000)
+                page_is_valid = True
+                break
+            except PWTimeoutError:
+                pass
+            
+            page.reload()
+            
+            retry += 1
+            
+        
+        if not page_is_valid:
+            raise InvalidAuth(f"Auth failed after {retry} retries.")
+            
         
         return page
     
-    def _save_session(self, clientOptions, browser_or_ctx) -> Page:
-        return self._auth_with_qr(browser_or_ctx=browser_or_ctx, clientOptions=clientOptions)
+    def _save_session(self, client_options, browser_or_ctx) -> Page:
+        return self._auth_with_qr(browser_or_ctx=browser_or_ctx, client_options=client_options)

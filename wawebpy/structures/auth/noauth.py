@@ -12,15 +12,15 @@ class NoAuth(BaseAuth):
         """Initializes NoAuth and calls BaseAuth constructor."""
         super().__init__(client)
         
-    def authenticate(self, clientOptions, playwright: Playwright) -> Page:
+    def authenticate(self, client_options, playwright: Playwright) -> Page:
         """
         Performs authentication using QR code scanning.
         
         Args:
-            clientOptions: ClientOptions dictionary passed from the Client.
+            client_options: ClientOptions dictionary passed from the Client.
             
         Returns:
             The result of the _auth_with_qr method, which handles QR authentication.
         """
-        browser = playwright.chromium.launch(headless=clientOptions.get("headless"))
-        return self._auth_with_qr(clientOptions=clientOptions, browser=browser)
+        browser = playwright.chromium.launch(headless=client_options.get("headless"))
+        return self._auth_with_qr(client_options=client_options, browser=browser)
