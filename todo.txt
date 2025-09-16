@@ -1,12 +1,13 @@
-Implement:
-    Contact:
-        WAWebFindCommonGroupsContactAction.findCommonGroups,
-        WAWebContactStatusBridge, WAWebApiContact
-    
-    Auth & QR:
-        Better Logged-in detection
-
+Implement:    
     WAWebContactStatusBridge & other:
         WidFactory
+
+    Group !:
+        FOR METADATA
+        WAWebGroupQueryJob.queryAndUpdateGroupMetadataById
+
+    Contact:
+        WAWebFindCommonGroupsContactAction.findCommonGroups
+
 
     Better Error Handling
