@@ -13,3 +13,4 @@ class ClientOptions(TypedDict):
     headless: bool
     web_url: str
     qr_data_selector: str
+    loaded_selector: str
