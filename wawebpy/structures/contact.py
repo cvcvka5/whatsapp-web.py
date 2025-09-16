@@ -90,8 +90,6 @@ class Contact:
         new_contact = Contact.get(self.page, self.jid)
         self.__dict__.update(new_contact.__dict__)
     
-
-    
     # --- Properties (read-only) ---
     def get_common_groups(self):
         # TODO
@@ -108,10 +106,18 @@ class Contact:
         script = get_module_script("WAWebContactProfilePicThumbBridge", "profilePicResync", (f"[{self.__js_repr}]",))
         return self.page.evaluate(script)[0].get("eurl")
 
+    def get_lid(self) -> IDType:
+        script = get_module_script("WAWebApiContact", "getCurrentLid", 
+                                   (self.__js_variable_repr("id"), ))
+        return self.page.evaluate(script)
     
     @property
     def page(self) -> Page:
         return self._page
+
+    @property
+    def hash(self) -> str:
+        return self._hash
 
     @property
     def id(self) -> IDType:
