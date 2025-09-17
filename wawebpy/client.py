@@ -4,6 +4,7 @@ from .structures.message import Message
 from .structures.eventemitter import EventEmitter
 from .structures.clientoptions import ClientOptions
 from .structures.contact import Contact
+from .structures.group import Group
 from .exceptions import ClientAlreadyInitialized, InvalidAuth
 from .util import get_module_script
 from typing import overload, Literal, Callable
@@ -93,6 +94,9 @@ class Client(EventEmitter):
         
     def get_contact(self, jid: str) -> Contact:
         return Contact.get(self._page, jid)
+    
+    def get_group(self, jid: str) -> Group:
+        return Group.get(self._page, jid)
 
 
     def stop(self):
