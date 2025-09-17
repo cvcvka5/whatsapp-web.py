@@ -4,6 +4,8 @@ Implement:
 
     Message Class
 
+    More options
+
     More Events
 
     Better Error Handling
