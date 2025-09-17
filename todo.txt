@@ -2,4 +2,8 @@ Implement:
     WAWebContactStatusBridge & other:
         WidFactory
 
+    Message Class
+
+    More Events
+
     Better Error Handling
