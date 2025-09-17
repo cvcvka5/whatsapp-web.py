@@ -1,49 +1,45 @@
-# WhatsApp Web Python Client
-
-A Python client for interacting with WhatsApp Web using Playwright.
-This project allows QR-based authentication and aims to provide a framework for automating or interacting with WhatsApp Web programmatically.
+# whatsapp-web.py
 
 > ⚠️ **Work in Progress:** This project is under active development. Features may be incomplete and APIs may change.
 
-## Features
 
-* QR code authentication
-* Event-based architecture with `EventEmitter`
-* Supports multiple authentication methods:
+A Python client for interacting with [WhatsApp Web](https://web.whatsapp.com/) using Playwright. This library provides QR-based authentication, session management, and an event-driven API for automating and interacting with chats, messages, and media.
 
-  * `NoAuth` (QR-based login)
-  * `LegacySessionAuth` (planned)
-  * `LocalAuth` (planned)
-* Playwright-based browser automation
+## Key Techniques
 
-## Usage
+* **Playwright-based browser automation** for headless and headed browser control. ([MDN: Browser Automation](https://developer.mozilla.org/en-US/docs/Web/API/Automation))
+* **Event-driven architecture** using a custom `EventEmitter` pattern to manage asynchronous events like incoming messages, connection updates, and status changes.
+* **Dynamic JavaScript module injection** to interact with WhatsApp Web internals without relying on the official API.
+* **TypedDict and data modeling** for structured type-safe access to contacts, groups, and messages in Python.
 
-```python
-The package is not yet functional. Keep contributing to speed up the process.
+## Notable Libraries & Technologies
+
+* **[Playwright](https://playwright.dev/python/)** for full browser automation.
+* **Python `typing` module** for runtime type checking and clarity in data models.
+* **Modern JS techniques**: dynamic module injection, eval-based script execution, and DOM querying to interface with WhatsApp Web.
+* **Custom QR login handling** and session persistence to maintain state between script runs.
+
+## Project Structure
+
+```
+wawebpy/
+├── client.py           # Main client and initialization
+├── structures/         # Chat, Contact, Group models, and event handling
+├── util/               # Utility scripts and helpers for JS injection
+└── __init__.py
 ```
 
-## Contributing
+* `structures/` contains core Python abstractions for Contacts, Groups, Chats, and Events.
+* `util/` includes helpers for safely injecting and executing JavaScript inside the WhatsApp Web environment.
 
-We welcome contributions! This project is a work-in-progress, so your help is invaluable. Here are ways you can contribute:
+## Contributions
 
-1. **Bug Reports:** Open an issue if you find a bug, unexpected behavior, or have questions.
-2. **Feature Requests:** Suggest new features or improvements to existing functionality.
-3. **Code Contributions:**
+We welcome contributions of any kind:
 
-   * Fork the repository.
-   * Create a feature branch (`git checkout -b feature-name`).
-   * Make your changes and commit them (`git commit -m 'Add new feature'`).
-   * Push to your branch (`git push origin feature-name`).
-   * Open a Pull Request for review.
-4. **Documentation:** Improve or expand the documentation to help new contributors understand the project.
+* Bug fixes
+* Feature requests
+* Documentation improvements
+* Examples or tutorials
+* Code refactoring
 
-**Please Note:** APIs may change frequently, and some features are not yet implemented. Contributions that help stabilize and document the project are highly appreciated.
-
-## Acknowledgements
-
-This project is inspired by whatsapp-web.js
-, a Node.js library that connects to WhatsApp Web. While this implementation is in Python, the core idea and approach are influenced by the work done in the JavaScript community.
-
-## License
-
-This project is open-source. Please check the LICENSE file for details.
+If you have ideas or improvements, feel free to open a pull request. Every contribution helps strengthen this project and supports professional developers in building automation on top of WhatsApp Web.
