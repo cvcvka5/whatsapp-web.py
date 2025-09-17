@@ -1,6 +1,6 @@
 [project]
 name = "wawebpy"
-version = "0.0.2"
+version = "0.0.3"
 description = "A Python library to control WhatsApp Web."
 authors = [
     {name = "Ulus Vatansever",email = "cvcvka5@gmail.com"}
