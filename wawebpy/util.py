@@ -47,7 +47,7 @@ def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple
         for variable in variables:
             ret += f".{variable}"
     
-    if function:
+    if function is not None:
         ret += f".{function}("
 
     if args is not None:
@@ -56,7 +56,7 @@ def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple
     
     ret = ret.strip(",")
     
-    if function:
+    if function is not None:
         ret += ")"
     
     return ret
