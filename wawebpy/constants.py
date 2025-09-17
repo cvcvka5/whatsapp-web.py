@@ -7,7 +7,7 @@ WAWebModuleType = Literal[
     "WAWebConnModel.Conn",
     "WAWebCmd.Cmd",
     "WAWebDownloadManager.downloadManager",
-    "WAWebGroupQueryJob.queryAndUpdateGroupMetadataById",
+    "WAWebGroupQueryJob",
     "WAWebPrepRawMedia",
     "WAWebMediaStorage",
     "WAWebMmsMediaTypes",
