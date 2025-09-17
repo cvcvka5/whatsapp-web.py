@@ -18,6 +18,7 @@ A Python client for interacting with [WhatsApp Web](https://web.whatsapp.com/) u
 * **Python `typing` module** for runtime type checking and clarity in data models.
 * **Modern JS techniques**: dynamic module injection, eval-based script execution, and DOM querying to interface with WhatsApp Web.
 * **Custom QR login handling** and session persistence to maintain state between script runs.
+* **[whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js)** as a reference to WhatsApp's internal api. 
 
 ## Project Structure
 
