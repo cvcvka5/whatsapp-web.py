@@ -36,8 +36,6 @@ def get_qr_in_page(page: Page, qr_data_selector: str, timeout: int = 5000) -> qr
     
     return qr
 
-
-
 def get_module_script(module: WAWebModuleType, function: str = None, args: Tuple[str] = None) -> str:
     
     basename, *variables = module.split(".")
