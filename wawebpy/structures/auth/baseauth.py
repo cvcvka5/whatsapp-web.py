@@ -50,7 +50,8 @@ class BaseAuth(ABC):
                 retry += 1  # Increment retry counter if QR is not found
                 
                 if retry >= max_retries:
-                    raise exc  # Give up after exceeding max retries
+                    # Give up after exceeding max retries
+                    raise QrNotFound(f"QR code not found after {max_retries} retries on {page.url}") from exc
                 elif retry % 3 == 0:
                     page.reload()
 

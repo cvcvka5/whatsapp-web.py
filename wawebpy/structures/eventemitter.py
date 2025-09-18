@@ -36,6 +36,8 @@ class EventEmitter:
             *args: Positional arguments to pass to the callbacks.
             **kwargs: Keyword arguments to pass to the callbacks.
         """
-        if event_name in self.events:
-            for callback in self.events[event_name]:
+        for callback in self.events.get(event_name, []):
+            try:
                 callback(*args, **kwargs)
+            except Exception as e:
+                print(f"Error in '{event_name}' callback: {e}")

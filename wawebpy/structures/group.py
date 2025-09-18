@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TypedDict, List, Optional, Any, Dict
+from typing import TypedDict, List, Optional, Any
+from ..exceptions import GroupNotFound, FetchGroupMetadataError
 from playwright.sync_api import Page
 from ..util import get_contact_script, get_module_script
 from .contact import Contact
@@ -97,24 +98,27 @@ class Group(Chat):
         attrs = {}
         # Get general chat attributes
         group_script = get_contact_script(jid)
-        for func_name, attr_name in Chat._attribute_map.items():
-            script = get_module_script(
-                module="WAWebChatGetters",
-                function=func_name,
-                args=(group_script,),
-            )
-            attr_value = page.evaluate(script)
-            attrs[attr_name] = attr_value
+        try:
+            for func_name, attr_name in Chat._attribute_map.items():
+                script = get_module_script(
+                    module="WAWebChatGetters",
+                    function=func_name,
+                    args=(group_script,),
+                )
+                attr_value = page.evaluate(script)
+                attrs[attr_name] = attr_value
 
-        # Get group specific attributes
-        for func_name, attr_name in Group._attribute_map.items():
-            script = get_module_script(
-                module="WAWebContactGetters",
-                function=func_name,
-                args=(group_script,),
-            )
-            attr_value = page.evaluate(script)
-            attrs[attr_name] = attr_value
+            # Get group specific attributes
+            for func_name, attr_name in Group._attribute_map.items():
+                script = get_module_script(
+                    module="WAWebContactGetters",
+                    function=func_name,
+                    args=(group_script,),
+                )
+                attr_value = page.evaluate(script)
+                attrs[attr_name] = attr_value
+        except Exception as e:
+            raise GroupNotFound("An error occurred while trying to get Group.") from e
 
         # Get metadata
 
@@ -132,7 +136,10 @@ class Group(Chat):
             function="queryGroupsById",
             args=("["+self._js_variable_repr('id')+"['_serialized']]",)
         )
-        metadata = self.page.evaluate(script)[0]
+        try:
+            metadata = self.page.evaluate(script)[0]
+        except Exception as e:
+            raise FetchGroupMetadataError("An error occured while fetching Group Metadata") from e
         
         return metadata
 

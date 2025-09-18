@@ -1,5 +1,5 @@
 from .baseauth import BaseAuth
-from ...exceptions import QrNotFound, InvalidAuth
+from ...exceptions import QrNotFound, InvalidAuth, SessionExpired, SessionLoadError
 from ...util import get_qr_in_page
 import os
 import shutil
@@ -65,7 +65,7 @@ class LocalAuth(BaseAuth):
             try:
                 get_qr_in_page(page, client_options.get("qr_data_selector"), 5000)
                 self.logout()
-                raise InvalidAuth("Local session has expired or is invalid.")
+                raise SessionExpired(f"Local session expired at {self.filepath}")
             except QrNotFound:
                 pass
             
@@ -82,7 +82,7 @@ class LocalAuth(BaseAuth):
             
         
         if not page_is_valid:
-            raise InvalidAuth(f"Auth failed after {retry} retries.")
+            raise SessionLoadError(f"Failed to load local session after {retry} retries.")
             
         
         return page

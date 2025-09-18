@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TypedDict, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from .group import Group
-
+from ..exceptions import StatusFetchError, ContactNotFound, ProfilePictureNotFound, WidFetchError
 from playwright.sync_api import Page
 from ..util import get_contact_script, get_module_script
 from .chat import Chat, ChatIDType
@@ -70,17 +70,23 @@ class Contact(Chat):
         attrs = {}
         
         # Pull common Chat attributes
-        contact_script = get_contact_script(jid)
-        for func_name, attr_name in Chat._attribute_map.items():
-            script = get_module_script("WAWebChatGetters", func_name, (contact_script,))
-            attr_value = page.evaluate(script)
-            attrs[attr_name] = attr_value
+        try:
+            contact_script = get_contact_script(jid)
+            for func_name, attr_name in Chat._attribute_map.items():
+                script = get_module_script("WAWebChatGetters", func_name, (contact_script,))
+                attr_value = page.evaluate(script)
+                attrs[attr_name] = attr_value
 
-        # Pull Contact-specific attributes
-        for func_name, attr_name in Contact._attribute_map.items():
-            script = get_module_script("WAWebContactGetters", func_name, (contact_script,))
-            attr_value = page.evaluate(script)
-            attrs[attr_name] = attr_value
+            # Pull Contact-specific attributes
+            for func_name, attr_name in Contact._attribute_map.items():
+                script = get_module_script("WAWebContactGetters", func_name, (contact_script,))
+                attr_value = page.evaluate(script)
+                attrs[attr_name] = attr_value
+        except Exception as e:
+            raise ContactNotFound(f"Failed to fetch contact {jid}") from e
+
+        if not attrs.get("id"):
+            raise ContactNotFound(f"Contact {jid} not found")
 
         return Contact(page, **attrs)
 
@@ -91,12 +97,21 @@ class Contact(Chat):
 
     # --- Contact-only methods ---
     def get_status(self) -> str:
-        script = get_module_script("WAWebContactStatusBridge", "getStatus", (self._js_variable_repr("id"),))
-        return self.page.evaluate(script)["status"]
+        try:
+            script = get_module_script("WAWebContactStatusBridge", "getStatus", (self._js_variable_repr("id"),))
+            return self.page.evaluate(script)["status"]
+        except Exception as e:
+            raise StatusFetchError(f"Failed to fetch status for {self.jid}") from e
 
     def get_profile_picture(self) -> str:
-        script = get_module_script("WAWebContactProfilePicThumbBridge", "profilePicResync", (f"[{self._js_repr}]",))
-        return self.page.evaluate(script)[0].get("eurl")
+        try:
+            script = get_module_script("WAWebContactProfilePicThumbBridge", "profilePicResync", (f"[{self._js_repr}]",))
+            pic = self.page.evaluate(script)[0].get("eurl")
+            if not pic:
+                raise ProfilePictureNotFound(f"No profile picture found for {self.jid}")
+            return pic
+        except Exception as e:
+            raise ProfilePictureNotFound(f"Failed to fetch profile picture for {self.jid}") from e
 
     def get_lid(self) -> ChatIDType:
         script = get_module_script("WAWebApiContact", "getCurrentLid", (self._js_variable_repr("id"),))
@@ -164,17 +179,21 @@ class Contact(Chat):
         return self._can_request_number
 
     def _get_wid(self) -> ChatIDType:
-        if self.id["server"] == "c.us":
-            return self.id
-        elif self.id["server"] == "lid":
-            script = get_module_script(module="WAWebApiContact",
-                              function="getPhoneNumber",
-                              args=(self._js_variable_repr("id"),))
-            wid = self.page.evaluate(script)
-            
-            return wid
-        else:
-            return None
+        try:
+            if self.id["server"] == "c.us":
+                return self.id
+            elif self.id["server"] == "lid":
+                script = get_module_script(module="WAWebApiContact",
+                                        function="getPhoneNumber",
+                                        args=(self._js_variable_repr("id"),))
+                wid = self.page.evaluate(script)
+                if not wid:
+                    raise WidFetchError(f"No WID found for {self.jid}")
+                return wid
+            else:
+                raise WidFetchError(f"Unsupported server type for {self.jid}")
+        except Exception as e:
+            raise WidFetchError(f"Failed to fetch WID for {self.jid}") from e
 
     
     def __str__(self):
