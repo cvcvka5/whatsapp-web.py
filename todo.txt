@@ -1,7 +1,4 @@
 Implement:    
-    WAWebContactStatusBridge & other:
-        WidFactory
-
     Message Class
 
     More options
