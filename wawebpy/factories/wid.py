@@ -9,8 +9,9 @@ class Wid:
     @staticmethod
     def fromChat(page: Page, chat: Chat) -> ChatIDType:
         script = page.evaluate(Wid.fromChatScript(chat))
+        
         return script
     
     @staticmethod
     def fromChatScript(chat: Chat) -> str:
-        return get_module_script(module="WAWebWidFactory", function="createWid", args=(chat._js_repr,))
+        return get_module_script(module="WAWebWidFactory", function="createWid", args=(chat._js_variable_repr("id"),))

@@ -1,10 +1,9 @@
+from ...logger import logger
 from abc import ABC, abstractmethod
 from playwright._impl._errors import TimeoutError as PWTimeoutError
 from wawebpy.exceptions import QrNotFound
 from playwright.sync_api import Page
 from ...util import get_qr_in_page
-
-
 
 class BaseAuth(ABC):
     def __init__(self, client):
@@ -34,42 +33,61 @@ class BaseAuth(ABC):
             client_options: Dictionary of client options including selectors.
         """
         qr = None  # Store the last QR code to detect changes
-
-            
         page = browser_or_ctx.new_page()
+        logger.info("Opening WhatsApp Web at %s", client_options.get("web_url"))
         page.goto(client_options.get("web_url"))
+
         retry = 0
         while retry <= max_retries:
             try:
                 # Try to get the current QR code from the page
-                current_qr = get_qr_in_page(page=page,
-                                            qr_data_selector=client_options.get("qr_data_selector"),
-                                            timeout=5000)
+                current_qr = get_qr_in_page(
+                    page=page,
+                    qr_data_selector=client_options.get("qr_data_selector"),
+                    timeout=5000,
+                )
+                logger.debug("QR code successfully retrieved.")
                 retry = 0  # Reset retry counter on success
             except QrNotFound as exc:
-                retry += 1  # Increment retry counter if QR is not found
-                
+                retry += 1
+                logger.warning(
+                    "QR code not found (attempt %d/%d) at %s",
+                    retry, max_retries, page.url,
+                )
+
                 if retry >= max_retries:
-                    # Give up after exceeding max retries
-                    raise QrNotFound(f"QR code not found after {max_retries} retries on {page.url}") from exc
+                    logger.error(
+                        "Failed to find QR code after %d retries on %s",
+                        max_retries, page.url,
+                    )
+                    raise QrNotFound(
+                        f"QR code not found after {max_retries} retries on {page.url}"
+                    ) from exc
                 elif retry % 3 == 0:
+                    logger.info("Reloading page to try QR fetch again.")
                     page.reload()
 
-                current_qr = None  # No QR available this iteration
-            
-            # Emit QR only if it exists and has changed since last emission
-            if current_qr is not None and (qr is None or qr.data_list[0].data != current_qr.data_list[0].data):
+                current_qr = None
+
+            # Emit QR only if it exists and has changed
+            if (
+                current_qr is not None
+                and (qr is None or qr.data_list[0].data != current_qr.data_list[0].data)
+            ):
+                logger.info("Emitting new QR code.")
                 self.client.emit("qr", current_qr)
                 qr = current_qr
 
             # Check if the main WhatsApp interface has loaded
             try:
                 if current_qr is None:
-                    # Wait for the WhatsApp chats interface to appear
-                    page.wait_for_selector(client_options.get("loaded_selector"), timeout=1000)
-                    break  # Chats loaded, exit loop
+                    page.wait_for_selector(
+                        client_options.get("loaded_selector"),
+                        timeout=1000,
+                    )
+                    logger.info("WhatsApp interface loaded successfully.")
+                    break
             except PWTimeoutError:
-                # Page not loaded yet, continue checking
-                pass
-        
+                logger.debug("WhatsApp interface not loaded yet, retrying...")
+
         return page

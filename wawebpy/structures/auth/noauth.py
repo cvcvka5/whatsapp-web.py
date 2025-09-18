@@ -1,5 +1,8 @@
-from .baseauth import BaseAuth
+from ...logger import logger
 from playwright.sync_api import Page, Playwright
+
+from .baseauth import BaseAuth
+
 
 
 class NoAuth(BaseAuth):
@@ -22,5 +25,12 @@ class NoAuth(BaseAuth):
         Returns:
             The result of the _auth_with_qr method, which handles QR authentication.
         """
+        logger.info("Starting NoAuth authentication (QR required).")
         browser = playwright.chromium.launch(headless=client_options.get("headless"))
-        return self._auth_with_qr(client_options=client_options, browser=browser)
+        try:
+            page = self._auth_with_qr(client_options=client_options, browser_or_ctx=browser)
+            logger.info("NoAuth authentication successful, session established.")
+            return page
+        except Exception as e:
+            logger.error("NoAuth authentication failed: %s", e)
+            raise
