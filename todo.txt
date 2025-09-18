@@ -1,8 +1,8 @@
 Implement:    
-    Message Class
+    (issued) Message Class
 
     More options
 
-    More Events
+    (issued) More Events
 
-    Better Error Handling
+    (issued) Verbose Logging
