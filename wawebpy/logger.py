@@ -20,7 +20,6 @@ ch.setFormatter(formatter)
 if not logger.hasHandlers():
     logger.addHandler(ch)
 
-
 def set_level(level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]):
     """
     Set the logging level globally.
