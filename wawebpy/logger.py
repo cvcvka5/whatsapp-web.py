@@ -4,7 +4,7 @@ from typing import Literal
 
 # Create a global logger instance
 logger = logging.getLogger("wawebpy")
-logger.setLevel(logging.WARNING)  # Default level, can be overridden
+logger.setLevel(logging.ERROR)  # Default level, can be overridden
 
 # Console handler
 ch = logging.StreamHandler(sys.stdout)
