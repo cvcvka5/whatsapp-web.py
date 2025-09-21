@@ -14,6 +14,7 @@ from .exceptions import (
     SettingStatusError,
     GettingChatError,
 )
+from qrcode import QRCode
 from .util import get_module_script
 from typing import overload, Literal, Callable, Union
 from playwright.sync_api import sync_playwright, Playwright, Page
@@ -40,7 +41,7 @@ class Client(EventEmitter):
     @overload
     def on(self, event_name: Literal["message"], callback: Callable[[Message], None]) -> None: ...
     @overload
-    def on(self, event_name: Literal["qr"], callback: Callable[[str], None]) -> None: ...
+    def on(self, event_name: Literal["qr"], callback: Callable[[QRCode], None]) -> None: ...
     @overload
     def on(self, event_name: Literal["connection"], callback: Callable[[], None]) -> None: ...
 
